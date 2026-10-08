@@ -1,0 +1,21 @@
+# Target build directory
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# IDE & Editor files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Soal tidak ikut ke remote
+TechTest Backend.pdf

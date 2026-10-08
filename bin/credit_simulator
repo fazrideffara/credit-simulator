@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Support execution from root or bin directory
+if [ -d "$SCRIPT_DIR/target" ]; then
+    ROOT_DIR="$SCRIPT_DIR"
+elif [ -d "$SCRIPT_DIR/../target" ]; then
+    ROOT_DIR="$SCRIPT_DIR/.."
+else
+    ROOT_DIR="$SCRIPT_DIR"
+fi
+
+cd "$ROOT_DIR"
+JAR_PATH="target/credit-simulator.jar"
+
+if [ ! -f "$JAR_PATH" ]; then
+    echo "[BUILD] Building credit_simulator with Maven..."
+    if command -v mvn &> /dev/null; then
+        mvn clean package -DskipTests
+    elif [ -f "./mvnw" ]; then
+        ./mvnw clean package -DskipTests
+    else
+        echo "[ERROR] Maven (mvn) required to build credit_simulator."
+        exit 1
+    fi
+fi
+
+if [ $# -gt 0 ]; then
+    java -jar "$JAR_PATH" "$1"
+else
+    java -jar "$JAR_PATH"
+fi

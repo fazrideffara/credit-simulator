@@ -1,0 +1,55 @@
+package com.bcadigital.creditsimulator.service;
+
+import com.bcadigital.creditsimulator.model.LoanRequest;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.Year;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class InputDitolakTest {
+
+    private final LoanCalculatorService calculator = new LoanCalculatorService();
+
+    @Test
+    void batasYangMasihSah() {
+        int tahun = Year.now().getValue();
+        assertDoesNotThrow(() -> calculator.calculate(req("Mobil", "Baru", tahun - 1, "100000000", 3, "35000000")));
+        assertDoesNotThrow(() -> calculator.calculate(req("Motor", "Bekas", 2020, "20000000", 2, "5000000")));
+        assertDoesNotThrow(() -> calculator.calculate(req("Mobil", "Bekas", 2020, "1000000000", 1, "250000000")));
+        assertDoesNotThrow(() -> calculator.calculate(req("Mobil", "Baru", tahun, "1000000000", 6, "350000000")));
+    }
+
+    @Test
+    void inputTidakSahTidakLolos() {
+        int tahun = Year.now().getValue();
+        assertDitolak(req("truk", "Baru", tahun, "100000000", 1, "50000000"));
+        assertDitolak(req("", "Baru", tahun, "100000000", 1, "50000000"));
+        assertDitolak(req("Mobil", "rusak", tahun, "100000000", 1, "50000000"));
+        assertDitolak(req("Mobil", "", tahun, "100000000", 1, "50000000"));
+        assertDitolak(req("Mobil", "Baru", 999, "100000000", 1, "50000000"));
+        assertDitolak(req("Mobil", "Baru", 10000, "100000000", 1, "50000000"));
+        assertDitolak(req("Mobil", "Baru", tahun - 2, "100000000", 1, "50000000"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "0", 1, "1"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "-100", 1, "10"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "1000000001", 1, "500000000"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "100000000", 0, "25000000"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "100000000", -1, "25000000"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "100000000", 8, "25000000"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "100000000", 1, "0"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "100000000", 1, "-5"));
+        assertDitolak(req("Mobil", "Bekas", 2020, "100000000", 1, "100000000"));
+        assertDitolak(req("Mobil", "Baru", tahun, "100000000", 1, "34999999"));
+        assertDitolak(req("Motor", "Lama", 2020, "20000000", 2, "4999999"));
+        assertThrows(IllegalArgumentException.class, () -> calculator.calculate(null));
+    }
+
+    private void assertDitolak(LoanRequest request) {
+        assertThrows(IllegalArgumentException.class, () -> calculator.calculate(request));
+    }
+
+    private LoanRequest req(String jenis, String kondisi, int tahun, String pinjaman, int tenor, String dp) {
+        return new LoanRequest(jenis, kondisi, tahun, new BigDecimal(pinjaman), tenor, new BigDecimal(dp));
+    }
+}

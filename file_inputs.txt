@@ -1,0 +1,9 @@
+# BCA Digital Credit Simulator File Input Sample
+show
+load
+save sheet Sesi-Mocky-RestAPI
+Mobil, Baru, 2025, 1000000000, 6, 500000000
+save sheet Simulasi-Mobil-1M
+Motor, Bekas, 2021, 25000000, 3, 7000000
+save sheet Simulasi-Motor-Bekas
+switch sheet Simulasi-Mobil-1M
