@@ -47,9 +47,6 @@ public class CommandHandler {
                 continue;
             }
             String pilihan = nomorMenu(line);
-            if (pilihan.equals("show")) {
-                continue;
-            }
             running = jalankan(pilihan, scanner, true);
         }
         System.out.println();
@@ -98,7 +95,16 @@ public class CommandHandler {
         String commandLower = command.toLowerCase();
 
         if (commandLower.equals("show") || commandLower.equals("help") || commandLower.equals("menu")) {
-            showMenu();
+            if (promptUser) {
+                clearScreen();
+            } else {
+                showMenu();
+            }
+            return true;
+        }
+
+        if (commandLower.equals("clear") || commandLower.equals("cls")) {
+            clearScreen();
             return true;
         }
 
@@ -123,7 +129,7 @@ public class CommandHandler {
             return true;
         }
 
-        if (commandLower.equals("calculate") || commandLower.equals("simulasi") || commandLower.equals("1")) {
+        if (commandLower.equals("calculate") || commandLower.equals("simulasi")) {
             handleInteractiveForm(scanner, null);
             return true;
         }
@@ -144,11 +150,11 @@ public class CommandHandler {
     private void showMenu() {
         System.out.println();
         banner("Credit Simulator BCA Digital");
-        item("1. show", "daftar perintah");
-        item("2. calculate", "isi data kredit");
-        item("3. load", "ambil data, lalu hitung");
-        item("4. save sheet", "simpan hasil terakhir");
-        item("5. switch sheet", "pindah ke sheet");
+        item("1. calculate", "isi data kredit");
+        item("2. load", "ambil data, lalu hitung");
+        item("3. save sheet", "simpan hasil terakhir");
+        item("4. switch sheet", "pindah ke sheet");
+        item("5. clear", "bersihkan layar");
         item("6. exit", "keluar");
         System.out.println(LINE);
         System.out.println("  Atau tempel satu baris:");
@@ -197,9 +203,9 @@ public class CommandHandler {
             System.out.println();
             banner("SHEET TERSIMPAN");
             Sheet active = sheets.getActiveSheet();
-            for (Sheet s : sheets.getAllSheets()) {
-                String mark = (active != null && active.getSheetId().equalsIgnoreCase(s.getSheetId())) ? " [aktif]" : "";
-                System.out.println("  " + s.getSheetId() + " | " + s.getName() + " | " + s.getFormattedCreatedAt() + mark);
+            for (Sheet storedSheet : sheets.getAllSheets()) {
+                String activeMark = (active != null && active.getSheetId().equalsIgnoreCase(storedSheet.getSheetId())) ? " [aktif]" : "";
+                System.out.println("  " + storedSheet.getSheetId() + " | " + storedSheet.getName() + " | " + storedSheet.getFormattedCreatedAt() + activeMark);
             }
             System.out.println(LINE);
 
@@ -313,14 +319,32 @@ public class CommandHandler {
 
     private static String nomorMenu(String line) {
         return switch (line) {
-            case "1" -> "show";
-            case "2" -> "calculate";
-            case "3" -> "load";
-            case "4" -> "save sheet";
-            case "5" -> "switch sheet";
+            case "1" -> "calculate";
+            case "2" -> "load";
+            case "3" -> "save sheet";
+            case "4" -> "switch sheet";
+            case "5" -> "clear";
             case "6" -> "exit";
             default -> line;
         };
+    }
+
+    private static void clearScreen() {
+        try {
+            if (System.console() != null) {
+                String osName = System.getProperty("os.name", "").toLowerCase();
+                ProcessBuilder builder = osName.contains("win")
+                        ? new ProcessBuilder("cmd", "/c", "cls")
+                        : new ProcessBuilder("clear");
+                builder.inheritIO().start().waitFor();
+                return;
+            }
+        } catch (Exception ignored) {
+            // layar tetap lanjut ke penanda di bawah
+        }
+        System.out.println();
+        System.out.println("(layar dibersihkan)");
+        System.out.println();
     }
 
     private static void banner(String text) {

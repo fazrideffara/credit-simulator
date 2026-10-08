@@ -38,16 +38,18 @@ Kalau JAR belum ada, skrip akan menjalankan `mvn clean package -DskipTests` dulu
 
 ## Mode interaktif
 
-Prompt-nya `credit_simulator>`.
+Prompt-nya `Pilih menu >`. Menu yang tampil:
 
-| Perintah | Fungsi |
-| --- | --- |
-| `show` | daftar perintah |
-| `calculate` | enam input: jenis, kondisi, tahun, jumlah pinjaman, tenor, DP |
-| `load` | ambil data dari web service, lalu hitung |
-| `save sheet [nama]` | simpan hasil terakhir |
-| `switch sheet [id/nama]` | pindah ke sheet yang sudah disimpan |
-| `exit` | keluar |
+| Nomor | Perintah | Fungsi |
+| --- | --- | --- |
+| 1 | `calculate` | enam input: jenis, kondisi, tahun, jumlah pinjaman, tenor, DP |
+| 2 | `load` | ambil data dari web service, lalu hitung |
+| 3 | `save sheet [nama]` | simpan hasil terakhir |
+| 4 | `switch sheet [id/nama]` | pindah ke sheet yang sudah disimpan |
+| 5 | `clear` | bersihkan layar, lalu tampilkan menu lagi |
+| 6 | `exit` | keluar |
+
+`show` tetap bisa diketik. Di mode file perintah itu mencetak daftar perintah. Di mode interaktif layar dibersihkan dulu supaya daftar tidak menumpuk.
 
 Bisa juga menempel satu baris:
 
