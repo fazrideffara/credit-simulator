@@ -2,7 +2,7 @@ package com.bcadigital.creditsimulator.service;
 
 import com.bcadigital.creditsimulator.model.VehicleType;
 
-public class DefaultInterestRateStrategy implements InterestRateStrategy {
+public class InterestRateStrategyServiceImpl implements InterestRateStrategyService {
 
     @Override
     public double calculateInterestRate(VehicleType vehicleType, int year) {
@@ -20,7 +20,7 @@ public class DefaultInterestRateStrategy implements InterestRateStrategy {
             return baseRatePercent + 0.1;
         }
 
-        int step = (year - 1) / 2;
-        return baseRatePercent + 0.1 + (step * 0.5);
+        int yearBlock = (year - 1) / 2;
+        return baseRatePercent + 0.1 + (yearBlock * 0.5);
     }
 }

@@ -11,14 +11,14 @@ import java.util.List;
 public class LoanCalculatorService {
 
     private static final BigDecimal MAX_LOAN_AMOUNT = new BigDecimal("1000000000");
-    private final InterestRateStrategy interestRateStrategy;
+    private final InterestRateStrategyService interestRateStrategyService;
 
     public LoanCalculatorService() {
-        this(new DefaultInterestRateStrategy());
+        this(new InterestRateStrategyServiceImpl());
     }
 
-    public LoanCalculatorService(InterestRateStrategy interestRateStrategy) {
-        this.interestRateStrategy = interestRateStrategy;
+    public LoanCalculatorService(InterestRateStrategyService interestRateStrategyService) {
+        this.interestRateStrategyService = interestRateStrategyService;
     }
 
     public void validate(LoanRequest request) {
@@ -26,8 +26,8 @@ public class LoanCalculatorService {
             throw new IllegalArgumentException("Permintaan simulasi tidak boleh null.");
         }
 
-        VehicleType type = request.getVehicleType();
-        VehicleCondition condition = request.getVehicleCondition();
+        VehicleType vehicleType = request.getVehicleType();
+        VehicleCondition vehicleCondition = request.getVehicleCondition();
 
         int year = request.getVehicleYear();
         if (year < 1000 || year > 9999) {
@@ -35,7 +35,7 @@ public class LoanCalculatorService {
         }
 
         int currentYear = Year.now().getValue();
-        if (condition == VehicleCondition.BARU && year < (currentYear - 1)) {
+        if (vehicleCondition == VehicleCondition.BARU && year < (currentYear - 1)) {
             throw new IllegalArgumentException(String.format(
                     "Kendaraan dengan kondisi BARU tidak boleh memiliki tahun kurang dari %d (CurrentYear - 1). Input tahun: %d",
                     currentYear - 1, year));
@@ -54,21 +54,21 @@ public class LoanCalculatorService {
             throw new IllegalArgumentException("Tenor Pinjaman harus antara 1 sampai 6 tahun.");
         }
 
-        BigDecimal dp = request.getDownPayment();
-        if (dp == null || dp.compareTo(BigDecimal.ZERO) <= 0) {
+        BigDecimal downPayment = request.getDownPayment();
+        if (downPayment == null || downPayment.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Jumlah DP harus lebih dari 0.");
         }
-        if (dp.compareTo(totalLoan) >= 0) {
+        if (downPayment.compareTo(totalLoan) >= 0) {
             throw new IllegalArgumentException("Jumlah DP tidak boleh sama atau melebihi Jumlah Pinjaman Total.");
         }
 
-        double minDpPercent = condition.getMinDownPaymentPercentage();
-        BigDecimal minDpAmount = totalLoan.multiply(BigDecimal.valueOf(minDpPercent));
+        double minimumDownPaymentPercent = vehicleCondition.getMinDownPaymentPercentage();
+        BigDecimal minimumDownPaymentAmount = totalLoan.multiply(BigDecimal.valueOf(minimumDownPaymentPercent));
 
-        if (dp.compareTo(minDpAmount) < 0) {
+        if (downPayment.compareTo(minimumDownPaymentAmount) < 0) {
             throw new IllegalArgumentException(String.format(
                     "Jumlah DP untuk kendaraan %s %s minimal %.0f%% dari Jumlah Pinjaman (Minimal: Rp %,.2f).",
-                    type.getDisplayName(), condition.getDisplayName(), minDpPercent * 100, minDpAmount));
+                    vehicleType.getDisplayName(), vehicleCondition.getDisplayName(), minimumDownPaymentPercent * 100, minimumDownPaymentAmount));
         }
     }
 
@@ -76,19 +76,19 @@ public class LoanCalculatorService {
         validate(request);
 
         BigDecimal totalLoan = request.getTotalLoanAmount();
-        BigDecimal dp = request.getDownPayment();
-        BigDecimal netPrincipal = totalLoan.subtract(dp);
+        BigDecimal downPayment = request.getDownPayment();
+        BigDecimal netPrincipal = totalLoan.subtract(downPayment);
         int tenure = request.getLoanTenure();
-        VehicleType type = request.getVehicleType();
+        VehicleType vehicleType = request.getVehicleType();
 
         List<YearlyInstallment> yearlyInstallments = new ArrayList<>();
         BigDecimal pokokSisa = netPrincipal;
 
         for (int year = 1; year <= tenure; year++) {
-            double ratePercent = interestRateStrategy.calculateInterestRate(type, year);
-            BigDecimal rate = BigDecimal.valueOf(ratePercent).movePointLeft(2);
+            double ratePercent = interestRateStrategyService.calculateInterestRate(vehicleType, year);
+            BigDecimal interestRate = BigDecimal.valueOf(ratePercent).movePointLeft(2);
 
-            BigDecimal totalTahun = pokokSisa.multiply(BigDecimal.ONE.add(rate));
+            BigDecimal totalTahun = pokokSisa.multiply(BigDecimal.ONE.add(interestRate));
             int sisaBulan = (12 * tenure) - (12 * (year - 1));
             BigDecimal cicilanBulan = totalTahun.divide(BigDecimal.valueOf(sisaBulan), 2, RoundingMode.HALF_UP);
             BigDecimal cicilanTahun = cicilanBulan.multiply(BigDecimal.valueOf(12));

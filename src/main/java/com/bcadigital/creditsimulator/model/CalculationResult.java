@@ -33,34 +33,34 @@ public class CalculationResult {
     }
 
     public String formatSummary() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(LINE).append('\n');
-        sb.append(center("HASIL PERHITUNGAN")).append('\n');
-        sb.append(LINE).append('\n');
-        sb.append(String.format("Jenis kendaraan   : %s\n", request.getVehicleType().getDisplayName()));
-        sb.append(String.format("Kondisi kendaraan : %s\n", request.getVehicleCondition().getDisplayName()));
-        sb.append(String.format("Tahun kendaraan   : %d\n", request.getVehicleYear()));
-        sb.append(String.format("Jumlah pinjaman   : %s\n", rupiah(request.getTotalLoanAmount())));
-        sb.append(String.format("Tenor             : %d tahun\n", request.getLoanTenure()));
-        sb.append(String.format("Uang muka (DP)    : %s\n", rupiah(request.getDownPayment())));
-        sb.append(String.format("Pokok pinjaman    : %s\n", rupiah(principalAmount)));
-        sb.append(LINE).append('\n');
+        StringBuilder summary = new StringBuilder();
+        summary.append(LINE).append('\n');
+        summary.append(center("HASIL PERHITUNGAN")).append('\n');
+        summary.append(LINE).append('\n');
+        summary.append(String.format("Jenis kendaraan   : %s\n", request.getVehicleType().getDisplayName()));
+        summary.append(String.format("Kondisi kendaraan : %s\n", request.getVehicleCondition().getDisplayName()));
+        summary.append(String.format("Tahun kendaraan   : %d\n", request.getVehicleYear()));
+        summary.append(String.format("Jumlah pinjaman   : %s\n", rupiah(request.getTotalLoanAmount())));
+        summary.append(String.format("Tenor             : %d tahun\n", request.getLoanTenure()));
+        summary.append(String.format("Uang muka (DP)    : %s\n", rupiah(request.getDownPayment())));
+        summary.append(String.format("Pokok pinjaman    : %s\n", rupiah(principalAmount)));
+        summary.append(LINE).append('\n');
 
         for (YearlyInstallment installment : yearlyInstallments) {
             String rateText = String.format(Locale.GERMAN, "%.1f%%", installment.interestRatePercent())
                     .replace(",0%", "%");
-            sb.append(String.format("tahun %d : %s/bln , Suku Bunga : %s\n",
+            summary.append(String.format("tahun %d : %s/bln , Suku Bunga : %s\n",
                     installment.year(),
                     rupiah(installment.monthlyInstallment()),
                     rateText));
         }
-        sb.append(LINE).append('\n');
-        return sb.toString();
+        summary.append(LINE).append('\n');
+        return summary.toString();
     }
 
     private static String center(String text) {
-        int pad = Math.max(0, (LINE.length() - text.length()) / 2);
-        return " ".repeat(pad) + text;
+        int padding = Math.max(0, (LINE.length() - text.length()) / 2);
+        return " ".repeat(padding) + text;
     }
 
     private String rupiah(BigDecimal amount) {

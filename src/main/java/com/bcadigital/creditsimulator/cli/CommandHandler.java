@@ -19,13 +19,13 @@ public class CommandHandler {
     private static final String LINE = "==========================================================";
 
     private final LoanCalculatorService calculator;
-    private final MockyApiClient api;
+    private final MockyApiClient mockyApiClient;
     private final SheetManager sheets;
     private CalculationResult lastResult;
 
     public CommandHandler() {
         this.calculator = new LoanCalculatorService();
-        this.api = new MockyApiClient();
+        this.mockyApiClient = new MockyApiClient();
         this.sheets = new SheetManager();
     }
 
@@ -80,9 +80,9 @@ public class CommandHandler {
         }
     }
 
-    private boolean jalankan(String line, Scanner scanner, boolean tanya) {
+    private boolean jalankan(String line, Scanner scanner, boolean promptUser) {
         try {
-            return processCommand(line, scanner, tanya);
+            return processCommand(line, scanner, promptUser);
         } catch (Exception e) {
             System.err.println("[ERROR] " + pesan(e));
             return true;
@@ -93,23 +93,23 @@ public class CommandHandler {
         return processCommand(commandLine, scanner, false);
     }
 
-    private boolean processCommand(String commandLine, Scanner scanner, boolean tanya) {
-        String cmd = commandLine.trim();
-        String lower = cmd.toLowerCase();
+    private boolean processCommand(String commandLine, Scanner scanner, boolean promptUser) {
+        String command = commandLine.trim();
+        String commandLower = command.toLowerCase();
 
-        if (lower.equals("show") || lower.equals("help") || lower.equals("menu")) {
+        if (commandLower.equals("show") || commandLower.equals("help") || commandLower.equals("menu")) {
             showMenu();
             return true;
         }
 
-        if (lower.equals("load")) {
+        if (commandLower.equals("load")) {
             handleLoadCommand();
             return true;
         }
 
-        if (lower.equals("save") || lower.startsWith("save ")) {
-            String name = stripSheetWord(tail(cmd, "save"));
-            if (name.isBlank() && tanya) {
+        if (commandLower.equals("save") || commandLower.startsWith("save ")) {
+            String name = stripSheetWord(tail(command, "save"));
+            if (name.isBlank() && promptUser) {
                 System.out.print("Nama sheet (Enter = otomatis): ");
                 name = scanner.nextLine().trim();
             }
@@ -117,27 +117,27 @@ public class CommandHandler {
             return true;
         }
 
-        if (lower.equals("sheet") || lower.equals("switch") || lower.startsWith("switch ")) {
-            String key = lower.equals("sheet") ? "" : stripSheetWord(tail(cmd, "switch"));
-            handleSwitchSheet(key, scanner, tanya);
+        if (commandLower.equals("sheet") || commandLower.equals("switch") || commandLower.startsWith("switch ")) {
+            String key = commandLower.equals("sheet") ? "" : stripSheetWord(tail(command, "switch"));
+            handleSwitchSheet(key, scanner, promptUser);
             return true;
         }
 
-        if (lower.equals("calculate") || lower.equals("simulasi") || lower.equals("1")) {
+        if (commandLower.equals("calculate") || commandLower.equals("simulasi") || commandLower.equals("1")) {
             handleInteractiveForm(scanner, null);
             return true;
         }
 
-        if (lower.equals("exit") || lower.equals("quit") || lower.equals("q")) {
+        if (commandLower.equals("exit") || commandLower.equals("quit") || commandLower.equals("q")) {
             return false;
         }
 
-        if (cmd.contains(",")) {
-            handleDirectLineInput(cmd);
+        if (command.contains(",")) {
+            handleDirectLineInput(command);
             return true;
         }
 
-        System.out.println("[WARNING] Perintah tidak dikenali: '" + cmd + "'. Ketik show untuk bantuan.");
+        System.out.println("[WARNING] Perintah tidak dikenali: '" + command + "'. Ketik show untuk bantuan.");
         return true;
     }
 
@@ -161,11 +161,11 @@ public class CommandHandler {
         System.out.println("Mengambil data dari web service...");
         LoanRequest request;
         try {
-            request = api.fetchExistingCalculation();
+            request = mockyApiClient.fetchExistingCalculation();
             System.out.println("Data berhasil diambil.");
         } catch (Exception e) {
             System.out.println("Web service tidak terjangkau. Memakai data contoh.");
-            request = api.sampleRequest();
+            request = mockyApiClient.sampleRequest();
         }
 
         try {
@@ -187,7 +187,7 @@ public class CommandHandler {
         System.out.println("[SUCCESS] Disimpan ke " + sheet.getSheetId() + " (" + sheet.getName() + ").");
     }
 
-    private void handleSwitchSheet(String searchKey, Scanner scanner, boolean tanya) {
+    private void handleSwitchSheet(String searchKey, Scanner scanner, boolean promptUser) {
         if (sheets.isEmpty()) {
             System.out.println("Belum ada sheet yang tersimpan.");
             return;
@@ -203,7 +203,7 @@ public class CommandHandler {
             }
             System.out.println(LINE);
 
-            if (!tanya) {
+            if (!promptUser) {
                 return;
             }
             System.out.print("Id atau nama sheet (Enter untuk batal): ");
@@ -250,9 +250,9 @@ public class CommandHandler {
             int tenure = Angka.tenor(scanner.nextLine());
 
             System.out.print("Input Jumlah DP: ");
-            BigDecimal dp = Angka.uang(scanner.nextLine());
+            BigDecimal downPayment = Angka.uang(scanner.nextLine());
 
-            printResult(new LoanRequest(rawType, rawCondition, year, totalLoan, tenure, dp));
+            printResult(new LoanRequest(rawType, rawCondition, year, totalLoan, tenure, downPayment));
         } catch (Exception e) {
             System.err.println("[ERROR] " + pesan(e));
         }
@@ -294,11 +294,11 @@ public class CommandHandler {
         return message;
     }
 
-    private static String tail(String cmd, String prefix) {
-        if (cmd.length() <= prefix.length()) {
+    private static String tail(String command, String prefix) {
+        if (command.length() <= prefix.length()) {
             return "";
         }
-        return cmd.substring(prefix.length()).trim();
+        return command.substring(prefix.length()).trim();
     }
 
     private static String stripSheetWord(String rest) {
@@ -324,14 +324,14 @@ public class CommandHandler {
     }
 
     private static void banner(String text) {
-        int pad = Math.max(0, (LINE.length() - text.length()) / 2);
+        int padding = Math.max(0, (LINE.length() - text.length()) / 2);
         System.out.println(LINE);
-        System.out.println(" ".repeat(pad) + text);
+        System.out.println(" ".repeat(padding) + text);
         System.out.println(LINE);
     }
 
-    private static void item(String cmd, String ket) {
-        System.out.println("  " + String.format("%-24s", cmd) + ket);
+    private static void item(String commandLabel, String keterangan) {
+        System.out.println("  " + String.format("%-24s", commandLabel) + keterangan);
     }
 
     private static boolean isVehicleType(String text) {
